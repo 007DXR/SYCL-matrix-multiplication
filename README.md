@@ -1,7 +1,15 @@
-# SYCL-matrix-multiplication
-## 基于oneAPI的C++/SYCL程序执行矩阵乘法操作
+# 北大软微-英特尔校企合作课程作业
+
+课程：C编程技能训练
+
+姓名：董欣然
+
+学号：2301210603
+
+
+## 作业一： 并⾏矩阵乘法
 ## 问题描述
-编写⼀个基于oneAPI的C++/SYCL程序来执行矩阵乘法操作。
+编写⼀个基于oneAPI的C++/SYCL程序来执行并⾏矩阵乘法。
 ![](images/naive.png)
 
 
@@ -70,7 +78,6 @@ lab/dxr -d 3 -m 16 -v -p
  -->
 
 
-
 ####  编译文件
 
 
@@ -112,9 +119,6 @@ Matrix 1:
 -1
 ```
 
-
-
-
 运行结果如下：
 
 ![图片显示异常](images/sample1.png)
@@ -125,6 +129,8 @@ Matrix 1:
 -3
 ```
 内核执行时长约等于6.659微秒，计算时长约等于0.158秒。
+
+更多测试用例详见 [samples/](https://github.com/007DXR/SYCL-matrix-multiplication/tree/main/samples)  
 <!-- - 选择设备
 
 `./q xxx.sh <DEVICE_NAME>`
