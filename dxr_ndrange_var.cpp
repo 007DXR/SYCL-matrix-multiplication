@@ -6,21 +6,22 @@
 // SPDX-License-Identifier: MIT
 // =============================================================
 
-
 #include <CL/sycl.hpp>
 
 using namespace sycl;
 
-void mm_kernel(queue &q, std::vector<float> &matrix_a, std::vector<float> &matrix_b, std::vector<float> &matrix_c, size_t N0,size_t N1,size_t N2, size_t M) {
+void mm_kernel(queue &q, std::vector<float> &matrix_a, std::vector<float> &matrix_b, std::vector<float> &matrix_c, size_t N0, size_t N1, size_t N2, size_t M)
+{
     std::cout << "Configuration         : MATRIX_SIZE= " << N0 << "x" << N2 << " | WORK_GROUP_SIZE= " << M << "x" << M << "\n";
 
-    //# Create buffers for matrices
+    // # Create buffers for matrices
     buffer a(matrix_a);
     buffer b(matrix_b);
     buffer c(matrix_c);
 
-    //# Submit command groups to execute on device
-    auto e = q.submit([&](handler &h){
+    // # Submit command groups to execute on device
+    auto e = q.submit([&](handler &h)
+                      {
         //# Create accessors to copy buffers to the device
         auto A = a.get_access<access::mode::read>(h);
         auto B = b.get_access<access::mode::read>(h);
@@ -40,11 +41,10 @@ void mm_kernel(queue &q, std::vector<float> &matrix_a, std::vector<float> &matri
                 temp += A[i*N1+k] * B[k*N2+j];
             }
             C[i*N2+j] = temp;
-        });
-    });
+        }); });
     c.get_access<access::mode::read>();
-    
-    //# print kernel compute duration from event profiling
+
+    // # print kernel compute duration from event profiling
     auto kernel_duration = (e.get_profiling_info<info::event_profiling::command_end>() - e.get_profiling_info<info::event_profiling::command_start>());
     std::cout << "Kernel Execution Time : " << kernel_duration / 1e+9 << " seconds\n";
 }

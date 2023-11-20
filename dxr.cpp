@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
 
     // # command line arguments
     int arg;
+    // compute duration except for input time cost
+    auto computed_time = 0;
 
     while ((arg = getopt(argc, argv, "d:m:vp")) != -1)
     {
@@ -77,20 +79,18 @@ int main(int argc, char *argv[])
     std::cout << "Offload Device        : " << q.get_device().get_info<info::device::name>() << "\n";
     std::cout << "max_work_group_size   : " << q.get_device().get_info<info::device::max_work_group_size>() << "\n";
 
-    // # get start time
-    auto start = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-
     std::vector<int> dimensions(D);
 
     for (int d = 0; d < D; ++d)
     {
-        std::cout << "Dimension " << d << ":" << std::endl;
+        std::cout << "Dimension " << d << ": ";
         std::cin >> dimensions[d];
         max_d = max(max_d, dimensions[d]);
     }
-    // # Define vectors for matrices
-    N0 = dimensions[0];
 
+    std::cout << "Matrix 0 :" << std::endl;
+    // # Initialize matrix0 with values
+    N0 = dimensions[0];
     N1 = dimensions[1];
     std::vector<float> matrix_a(N0 * max_d);
     for (int i = 0; i < N0; i++)
@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
         {
             std::cin >> matrix_a[i * N1 + j];
         }
+
     for (int d = 2; d < D; ++d)
     {
         N2 = dimensions[d];
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
         std::vector<float> matrix_b(N1 * N2);
         std::vector<float> matrix_c(N0 * N2);
         std::vector<float> matrix_d(N0 * N2);
-        std::cout << "MATRIX " << d - 1 << " : " << N1 << " x " << N2 << std::endl;
+        std::cout << "Matrix " << d - 1 << " :" << std::endl;
         // # Initialize matrices with values
 
         for (int i = 0; i < N1; i++)
@@ -113,10 +114,14 @@ int main(int argc, char *argv[])
             {
                 std::cin >> matrix_b[i * N2 + j];
             }
+        // # get start time
+        auto start = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 
         // # Call matrix multiplication kernel implementation
         mm_kernel(q, matrix_a, matrix_b, matrix_c, N0, N1, N2, M);
-
+        auto duration = std::chrono::high_resolution_clock::now().time_since_epoch().count() - start;
+        //         only the time cost of matrix multiplication is added to the conputed_time
+        computed_time += duration;
         // # Compute local and compare with offload computation if -v in cmd-line
         if (VERIFY)
         {
@@ -147,15 +152,16 @@ int main(int argc, char *argv[])
         {
             for (int j = 0; j < N2; j++)
             {
-//                 std::cout << matrix_c[i * N2 + j] << " " << lab/dxr -d 4 -m 16 -v -pmatrix_d[i * N2 + j] << " ";
+                //                 std::cout << matrix_c[i * N2 + j] << " " << lab/dxr -d 4 -m 16 -v -pmatrix_d[i * N2 + j] << " ";
                 matrix_a[i * N2 + j] = matrix_c[i * N2 + j];
             }
-            std::cout << "\n";
+            //             std::cout << "\n";
         }
-        N1=N2;
+        N1 = N2;
     }
 
     // # Print Output if -p in cmd-line
+    std::cout << "Output Matrix: " << std::endl;
     if (PRINT_OUTPUT_MATRIX)
     {
         for (int i = 0; i < N0; i++)
@@ -166,14 +172,13 @@ int main(int argc, char *argv[])
             }
             std::cout << "\n";
         }
-
     }
     else
     {
         std::cout << " [0][0] = " << matrix_a[0] << "\n";
     }
     // # print kernel compute duration from host
-    auto duration = std::chrono::high_resolution_clock::now().time_since_epoch().count() - start;
-    std::cout << "Compute Duration      : " << duration / 1e+9 << " seconds\n";
+
+    std::cout << "Compute Duration      : " << computed_time / 1e+9 << " seconds\n";
     return 0;
 }
